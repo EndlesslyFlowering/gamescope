@@ -23,6 +23,8 @@ extern "C" {
 
 #include "gamescope-input-method-protocol.h"
 
+struct wlserver_input_method_manager *global_manager = nullptr;
+
 /* The C/C++ standard library doesn't expose a reliable way to decode UTF-8,
  * so we need to ship our own implementation. Yay for locales. */
 
@@ -364,7 +366,7 @@ static bool try_type_keysym(struct wlserver_input_method *ime, xkb_keysym_t keys
 	return false;
 }
 
-static void type_text(struct wlserver_input_method *ime, const char *text)
+void type_text(struct wlserver_input_method *ime, const char *text)
 {
 	// If possible, try to type the character without switching the keymap
 	// ...unless we're already using a fancy keymap
@@ -493,15 +495,21 @@ static const struct gamescope_input_method_interface ime_impl = {
 	.set_action = ime_handle_set_action,
 };
 
+void destroy_ime(struct wlserver_input_method *ime)
+{
+	if (ime == active_input_method)
+		active_input_method = nullptr;
+
+	wlr_input_device_destroy(&ime->keyboard_device);
+}
+
 static void ime_handle_resource_destroy(struct wl_resource *ime_resource)
 {
 	struct wlserver_input_method *ime = (struct wlserver_input_method *)wl_resource_get_user_data(ime_resource);
 	if (ime == nullptr)
 		return;
 
-	active_input_method = nullptr;
-
-	wlr_input_device_destroy(&ime->keyboard_device);
+	destroy_ime(ime);
 
 	delete ime;
 }
@@ -566,6 +574,29 @@ static void manager_handle_create_input_method(struct wl_client *client, struct 
 	active_input_method = ime;
 }
 
+struct wlserver_input_method *create_local_ime()
+{
+	struct wlserver_input_method *ime = new wlserver_input_method();
+	ime->resource = nullptr;
+	ime->manager = global_manager;
+	ime->serial = 1;
+	ime->next_keycode_index = 0;
+	ime->held_keycode = -1;
+	ime->held_modifier_mask = 0;
+	ime->prev_mods = wlr_keyboard_modifiers{0};
+
+	wlr_keyboard_init(&ime->keyboard, &keyboard_impl);
+	wlr_input_device_init(&ime->keyboard_device, WLR_INPUT_DEVICE_KEYBOARD, &keyboard_device_impl, "ime", 0, 0);
+	ime->keyboard_device.keyboard = &ime->keyboard;
+
+	wlr_keyboard_set_repeat_info(&ime->keyboard, 0, 0);
+
+	ime->ime_reset_ime_keyboard_event_source = wl_event_loop_add_timer(global_manager->server->event_loop, reset_ime_keyboard, ime);
+	ime->ime_release_ime_keypress_event_source = wl_event_loop_add_timer(global_manager->server->event_loop, release_key_if_needed, ime);
+
+	return ime;
+}
+
 static void manager_handle_destroy(struct wl_client *client, struct wl_resource *manager_resource)
 {
 	wl_resource_destroy(manager_resource);
@@ -603,4 +634,6 @@ void create_ime_manager(struct wlserver_t *wlserver)
 	manager->server = wlserver;
 	manager->global = wl_global_create(wlserver->display, &gamescope_input_method_manager_interface, IME_MANAGER_VERSION, manager, manager_bind);
 	manager->ime_reset_keyboard_event_source = wl_event_loop_add_timer(wlserver->event_loop, reset_keyboard, wlserver);
+
+	global_manager = manager;
 }
