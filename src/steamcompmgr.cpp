@@ -3252,12 +3252,16 @@ get_appid_from_pid( pid_t pid )
 	{
 		snprintf( filename, sizeof( filename ), "/proc/%i/stat", next_pid );
 		std::ifstream proc_stat_file( filename );
+
+		if (!proc_stat_file.is_open() || proc_stat_file.bad())
+			break;
+
 		std::string proc_stat;
 
 		std::getline( proc_stat_file, proc_stat );
 
 		char *procName = nullptr;
-		char *lastParens;
+		char *lastParens = nullptr;
 
 		for ( uint32_t i = 0; i < proc_stat.length(); i++ )
 		{
@@ -3271,6 +3275,9 @@ get_appid_from_pid( pid_t pid )
 				lastParens = &proc_stat[ i ];
 			}
 		}
+
+		if (!lastParens)
+			break;
 
 		*lastParens = '\0';
 		char state;
