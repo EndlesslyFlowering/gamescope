@@ -111,6 +111,20 @@ namespace vr
     const VROverlayFlags VROverlayFlags_EnableControlBar = (VROverlayFlags)(1 << 23);
     const VROverlayFlags VROverlayFlags_EnableControlBarKeyboard = (VROverlayFlags)(1 << 24);
     const VROverlayFlags VROverlayFlags_EnableControlBarClose = (VROverlayFlags)(1 << 25);
+    const VROverlayFlags VROverlayFlags_EnableControlBarSteamUI = (VROverlayFlags)(1 << 26);
+
+    const EVREventType VREvent_SteamButton = (EVREventType)535;
+
+    enum ESteamButton
+    {
+        SteamButton_Steam = 0,
+        SteamButton_QAM = 1,
+    };
+
+    struct VREvent_SteamButton_t
+    {
+        ESteamButton eCode;
+    };
 }
 
 bool vrsession_init()
@@ -295,6 +309,18 @@ static void vrsession_input_thread()
                     wlserver_unlock();
                     break;
                 }
+
+                case vr::VREvent_SteamButton:
+                {
+                    vr::VREvent_SteamButton_t *pSteamButton = reinterpret_cast<vr::VREvent_SteamButton_t*>(&vrEvent.data);
+                    if (pSteamButton->eCode == vr::SteamButton_Steam)
+                        openvr_log.infof("STEAM button pressed.");
+                    else if (pSteamButton->eCode == vr::SteamButton_QAM)
+                        openvr_log.infof("QAM button pressed.");
+
+                    wlserver_open_steam_menu( pSteamButton->eCode == vr::SteamButton_QAM );
+                    break;
+                }
             }
         }
         sleep_for_nanos(2'000'000);
@@ -313,6 +339,11 @@ void vrsession_title( const char *title )
     {
         vr::VROverlay()->SetOverlayName( GetVR().hOverlay, (title && *title) ? title : GetVR().pchOverlayName );
     }
+}
+
+void vrsession_steam_mode( bool steamMode )
+{
+    vr::VROverlay()->SetOverlayFlag( GetVR().hOverlay, vr::VROverlayFlags_EnableControlBarSteamUI, steamMode );
 }
 
 ///////////////////////////////////////////////
