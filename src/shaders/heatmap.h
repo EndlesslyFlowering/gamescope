@@ -114,48 +114,48 @@ vec3 hdr_heatmap_lilium_impl(float Y) {
   vec3 output;
 
   if (Y <= LILIUM_STOP1_NITS) // <= 100 nits
-	{
-		//shades of grey
+  {
+    //shades of grey
     const float currentGreyscale = Y / LILIUM_STOP1_NITS * LILIUM_SCALE_GREYSCALE;
-		output.x = currentGreyscale;
-		output.y = currentGreyscale;
-		output.z = currentGreyscale;
-	}
-	else if (Y <= LILIUM_STOP2_NITS) // <= 203 nits
-	{
-		//cyan to green
-		output.x = 0.f;
-		output.y = 1.f;
-		output.z = hdr_heatmap_lilium_fade_out(Y, LILIUM_STOP1_NITS, LILIUM_STOP2_NITS);
-	}
-	else if (Y <= LILIUM_STOP3_NITS) // <= 400 nits
-	{
-		//green to yellow
-		output.x = hdr_heatmap_lilium_fade_in(Y, LILIUM_STOP2_NITS, LILIUM_STOP3_NITS);
-		output.y = 1.f;
-		output.z = 0.f;
-	}
-	else if (Y <= LILIUM_STOP4_NITS) // <= 1000 nits
-	{
-		//yellow to red
-		output.x = 1.f;
-		output.y = hdr_heatmap_lilium_fade_out(Y, LILIUM_STOP3_NITS, LILIUM_STOP4_NITS);
-		output.z = 0.f;
-	}
-	else if (Y <= LILIUM_STOP5_NITS) // <= 4000 nits
-	{
-		//red to pink
-		output.x = 1.f;
-		output.y = 0.f;
-		output.z = hdr_heatmap_lilium_fade_in(Y, LILIUM_STOP4_NITS, LILIUM_STOP5_NITS);
-	}
-	else // > 4000 nits
-	{
-		//pink to blue
-		output.x = Y <= 10000.f ? hdr_heatmap_lilium_fade_out(Y, LILIUM_STOP5_NITS, LILIUM_STOP6_NITS) : 0.f; // protect against values above 10000 nits
-		output.y = 0.f;
-		output.z = 1.f;
-	}
+    output.x = currentGreyscale;
+    output.y = currentGreyscale;
+    output.z = currentGreyscale;
+  }
+  else if (Y <= LILIUM_STOP2_NITS) // <= 203 nits
+  {
+    //cyan to green
+    output.x = 0.f;
+    output.y = 1.f;
+    output.z = hdr_heatmap_lilium_fade_out(Y, LILIUM_STOP1_NITS, LILIUM_STOP2_NITS);
+  }
+  else if (Y <= LILIUM_STOP3_NITS) // <= 400 nits
+  {
+    //green to yellow
+    output.x = hdr_heatmap_lilium_fade_in(Y, LILIUM_STOP2_NITS, LILIUM_STOP3_NITS);
+    output.y = 1.f;
+    output.z = 0.f;
+  }
+  else if (Y <= LILIUM_STOP4_NITS) // <= 1000 nits
+  {
+    //yellow to red
+    output.x = 1.f;
+    output.y = hdr_heatmap_lilium_fade_out(Y, LILIUM_STOP3_NITS, LILIUM_STOP4_NITS);
+    output.z = 0.f;
+  }
+  else if (Y <= LILIUM_STOP5_NITS) // <= 4000 nits
+  {
+    //red to pink
+    output.x = 1.f;
+    output.y = 0.f;
+    output.z = hdr_heatmap_lilium_fade_in(Y, LILIUM_STOP4_NITS, LILIUM_STOP5_NITS);
+  }
+  else // > 4000 nits
+  {
+    //pink to blue
+    output.x = Y <= 10000.f ? hdr_heatmap_lilium_fade_out(Y, LILIUM_STOP5_NITS, LILIUM_STOP6_NITS) : 0.f; // protect against values above 10000 nits
+    output.y = 0.f;
+    output.z = 1.f;
+  }
 
   return output;
 
