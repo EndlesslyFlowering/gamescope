@@ -81,54 +81,84 @@ vec3 hdr_heatmap_impl_ms_wcg(float nits) {
 // Has some cool greyscale stuff 8)
 //////////////////////////////////////
 
-#define LILIUM_STOP0_NITS 0.f
+// STOP0 being pure black and not needed
 #define LILIUM_STOP1_NITS 100.f
-#define LILIUM_STOP2_NITS 100.001f
-#define LILIUM_STOP3_NITS 203.f
-#define LILIUM_STOP4_NITS 400.f
-#define LILIUM_STOP5_NITS 1000.f
-#define LILIUM_STOP6_NITS 4000.f
-#define LILIUM_STOP7_NITS 10000.f
+#define LILIUM_STOP2_NITS 203.f
+#define LILIUM_STOP3_NITS 400.f
+#define LILIUM_STOP4_NITS 1000.f
+#define LILIUM_STOP5_NITS 4000.f
+#define LILIUM_STOP6_NITS 10000.f
 
-#define LILIUM_STOP0_COLOR vec3(0.0f, 0.0f, 0.0f) // Black
-#define LILIUM_STOP1_COLOR vec3(0.25f, 0.25f, 0.25f) // Black and White
-#define LILIUM_STOP2_COLOR vec3(0.0f, 1.0f, 1.0f) // Cyan
-#define LILIUM_STOP3_COLOR vec3(0.0f, 1.0f, 0.0f) // Green
-#define LILIUM_STOP4_COLOR vec3(1.0f, 1.0f, 0.0f) // Yellow
-#define LILIUM_STOP5_COLOR vec3(1.0f, 0.0f, 0.0f) // Red
-#define LILIUM_STOP6_COLOR vec3(1.0f, 0.0f, 1.0f) // Pink
-#define LILIUM_STOP7_COLOR vec3(0.0f, 0.0f, 1.0f) // Blue
+#define LILIUM_SCALE_GREYSCALE 0.25f
 
-vec3 hdr_heatmap_lilium_impl(float nits) {
+//////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+// colours fade linearly into each other above 100 nits as the nits increase
+//    0-  100 nits is kept in greyscale and scaled down by 25% so it doesn't overshadow the other parts of the heatmap
+//  100-  203 nits is   cyan into green
+//  203-  400 nits is  green into yellow
+//  400- 1000 nits is yellow into red
+// 1000- 4000 nits is    red into pink
+// 4000-10000 nits is   pink into blue
+//////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-    // 2: Determine which gradient segment will be used.
-    // Only one of useSegmentN will be 1 (true) for a given nits value.
-    float useSegment0 = sign(nits - LILIUM_STOP0_NITS) - sign(nits - LILIUM_STOP1_NITS);
-    float useSegment1 = sign(nits - LILIUM_STOP1_NITS) - sign(nits - LILIUM_STOP2_NITS);
-    float useSegment2 = sign(nits - LILIUM_STOP2_NITS) - sign(nits - LILIUM_STOP3_NITS);
-    float useSegment3 = sign(nits - LILIUM_STOP3_NITS) - sign(nits - LILIUM_STOP4_NITS);
-    float useSegment4 = sign(nits - LILIUM_STOP4_NITS) - sign(nits - LILIUM_STOP5_NITS);
-    float useSegment5 = sign(nits - LILIUM_STOP5_NITS) - sign(nits - LILIUM_STOP6_NITS);
-    float useSegment6 = sign(nits - LILIUM_STOP6_NITS) - sign(nits - LILIUM_STOP7_NITS);
+float hdr_heatmap_lilium_fade_in(const float Y, const float currentStop, const float normaliseTo) {
+  return (Y - currentStop) / (normaliseTo - currentStop);
+}
 
-    // 3: Calculate the interpolated color.
-    float lerpSegment0 = (nits - LILIUM_STOP0_NITS) / (LILIUM_STOP1_NITS - LILIUM_STOP0_NITS);
-    float lerpSegment1 = (nits - LILIUM_STOP1_NITS) / (LILIUM_STOP2_NITS - LILIUM_STOP1_NITS);
-    float lerpSegment2 = (nits - LILIUM_STOP2_NITS) / (LILIUM_STOP3_NITS - LILIUM_STOP2_NITS);
-    float lerpSegment3 = (nits - LILIUM_STOP3_NITS) / (LILIUM_STOP4_NITS - LILIUM_STOP3_NITS);
-    float lerpSegment4 = (nits - LILIUM_STOP4_NITS) / (LILIUM_STOP5_NITS - LILIUM_STOP4_NITS);
-    float lerpSegment5 = (nits - LILIUM_STOP5_NITS) / (LILIUM_STOP6_NITS - LILIUM_STOP5_NITS);
-    float lerpSegment6 = (nits - LILIUM_STOP6_NITS) / (LILIUM_STOP7_NITS - LILIUM_STOP6_NITS);
+float hdr_heatmap_lilium_fade_out(const float Y, const float currentStop, const float normaliseTo) {
+  return 1.f - hdr_heatmap_lilium_fade_in(Y, currentStop, normaliseTo);
+}
 
-    //  Only the "active" gradient segment contributes to the output color.
-    return
-        mix(LILIUM_STOP0_COLOR, LILIUM_STOP1_COLOR, lerpSegment0) * useSegment0 +
-        mix(LILIUM_STOP1_COLOR, LILIUM_STOP2_COLOR, lerpSegment1) * useSegment1 +
-        mix(LILIUM_STOP2_COLOR, LILIUM_STOP3_COLOR, lerpSegment2) * useSegment2 +
-        mix(LILIUM_STOP3_COLOR, LILIUM_STOP4_COLOR, lerpSegment3) * useSegment3 +
-        mix(LILIUM_STOP4_COLOR, LILIUM_STOP5_COLOR, lerpSegment4) * useSegment4 +
-        mix(LILIUM_STOP5_COLOR, LILIUM_STOP6_COLOR, lerpSegment5) * useSegment5 +
-        mix(LILIUM_STOP6_COLOR, LILIUM_STOP7_COLOR, lerpSegment6) * useSegment6;
+vec3 hdr_heatmap_lilium_impl(float Y) {
+
+  vec3 output;
+
+  if (Y <= LILIUM_STOP1_NITS) // <= 100 nits
+	{
+		//shades of grey
+    const float currentGreyscale = Y / LILIUM_STOP1_NITS * LILIUM_SCALE_GREYSCALE;
+		output.x = currentGreyscale;
+		output.y = currentGreyscale;
+		output.z = currentGreyscale;
+	}
+	else if (Y <= LILIUM_STOP2_NITS) // <= 203 nits
+	{
+		//cyan to green
+		output.x = 0.f;
+		output.y = 1.f;
+		output.z = hdr_heatmap_lilium_fade_out(Y, LILIUM_STOP1_NITS, LILIUM_STOP2_NITS);
+	}
+	else if (Y <= LILIUM_STOP3_NITS) // <= 400 nits
+	{
+		//green to yellow
+		output.x = hdr_heatmap_lilium_fade_in(Y, LILIUM_STOP2_NITS, LILIUM_STOP3_NITS);
+		output.y = 1.f;
+		output.z = 0.f;
+	}
+	else if (Y <= LILIUM_STOP4_NITS) // <= 1000 nits
+	{
+		//yellow to red
+		output.x = 1.f;
+		output.y = hdr_heatmap_lilium_fade_out(Y, LILIUM_STOP3_NITS, LILIUM_STOP4_NITS);
+		output.z = 0.f;
+	}
+	else if (Y <= LILIUM_STOP5_NITS) // <= 4000 nits
+	{
+		//red to pink
+		output.x = 1.f;
+		output.y = 0.f;
+		output.z = hdr_heatmap_lilium_fade_in(Y, LILIUM_STOP4_NITS, LILIUM_STOP5_NITS);
+	}
+	else // > 4000 nits
+	{
+		//pink to blue
+		output.x = max(hdr_heatmap_lilium_fade_out(Y, LILIUM_STOP5_NITS, LILIUM_STOP6_NITS);, 0.f); // protect against values above 10000 nits
+		output.y = 0.f;
+		output.z = 1.f;
+	}
+
+  return output;
+
 }
 
 vec3 hdr_heatmap(vec3 inputColor, bool in_2020, bool in_nits, bool out_nits) {
