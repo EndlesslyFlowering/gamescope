@@ -152,7 +152,7 @@ vec3 hdr_heatmap_lilium_impl(float Y) {
 	else // > 4000 nits
 	{
 		//pink to blue
-		output.x = max(hdr_heatmap_lilium_fade_out(Y, LILIUM_STOP5_NITS, LILIUM_STOP6_NITS);, 0.f); // protect against values above 10000 nits
+		output.x = Y <= 10000.f ? hdr_heatmap_lilium_fade_out(Y, LILIUM_STOP5_NITS, LILIUM_STOP6_NITS) : 0.f; // protect against values above 10000 nits
 		output.y = 0.f;
 		output.z = 1.f;
 	}
