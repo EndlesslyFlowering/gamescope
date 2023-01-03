@@ -116,7 +116,7 @@ vec3 hdr_heatmap_lilium_impl(float Y) {
   if (Y <= LILIUM_STOP1_NITS) // <= 100 nits
   {
     //shades of grey
-    const float currentGreyscale = Y / LILIUM_STOP1_NITS * LILIUM_SCALE_GREYSCALE;
+    const float currentGreyscale = Y > 0.f ? Y / LILIUM_STOP1_NITS * LILIUM_SCALE_GREYSCALE : 0.f;
     output.x = currentGreyscale;
     output.y = currentGreyscale;
     output.z = currentGreyscale;
