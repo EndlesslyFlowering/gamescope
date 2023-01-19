@@ -323,6 +323,8 @@ vec3 bt2446a_inverse_tonemapping(
     return color;
 }
 
+// Rep. ITU-R BT.2446-1 §6 (inversed)
+// BT.2446 Method C inverse tone mapping (itm)
 vec3 bt2446c_inverse_tonemapping(
     vec3  inputColor,
     float sdrBrightness)
@@ -342,11 +344,11 @@ vec3 bt2446c_inverse_tonemapping(
     //6.1.6 (inverse)
     //crosstalk matrix from 6.1.2
     const float alpha   = 0.f; //hardcode for now as it gives the best results imo
-    const float x_alpha = 1.f - 2.f * alpha;
+    const float xlpha = 1.f - 2.f * alpha;
     mat3 crosstalkMatrix;
-    crosstalkMatrix[0] = vec3(x_alpha, alpha,   alpha);
-    crosstalkMatrix[1] = vec3(alpha,   x_alpha, alpha);
-    crosstalkMatrix[2] = vec3(alpha,   alpha,   x_alpha);
+    crosstalkMatrix[0] = vec3(xlpha, alpha, alpha);
+    crosstalkMatrix[1] = vec3(alpha, xlpha, alpha);
+    crosstalkMatrix[2] = vec3(alpha, alpha, xlpha);
 
     sdr = sdr * crosstalkMatrix;
 
@@ -384,11 +386,11 @@ vec3 bt2446c_inverse_tonemapping(
 
     //6.1.2 (inverse)
     //inverse crosstalk matrix from 6.1.6
-    const float m_alpha = 1.f - alpha;
+    const float mlpha = 1.f - alpha;
     mat3 inverseCrosstalkMatrix;
-    inverseCrosstalkMatrix[0] = vec3( m_alpha, -alpha,   -alpha);
-    inverseCrosstalkMatrix[1] = vec3(-alpha,    m_alpha, -alpha);
-    inverseCrosstalkMatrix[2] = vec3(-alpha,   -alpha,    m_alpha);
+    inverseCrosstalkMatrix[0] = vec3( mlpha, -alpha, -alpha);
+    inverseCrosstalkMatrix[1] = vec3(-alpha,  mlpha, -alpha);
+    inverseCrosstalkMatrix[2] = vec3(-alpha, -alpha,  mlpha);
     hdr = hdr * (inverseCrosstalkMatrix * (1.f / 1.f - 3.f * alpha));
 
     //safety
