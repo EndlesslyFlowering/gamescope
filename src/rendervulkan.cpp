@@ -3170,6 +3170,7 @@ std::shared_ptr<CVulkanTexture> vulkan_acquire_screenshot_texture(uint32_t width
 
 float g_flLinearToNits = 400.0f;
 float g_flNitsToLinear = 1.0f / 100.0f;
+uint32_t g_HDRItmMethod = 0;
 float g_flHDRItmSdrNits = 100.f;
 float g_flHDRItmTargetNits = 1000.f;
 
@@ -3184,6 +3185,7 @@ struct BlitPushData_t
 
 	float linearToNits;
 	float nitsToLinear;
+	uint32_t itmMethod;
 	float itmSdrNits;
 	float itmTargetNits;
 
@@ -3201,6 +3203,7 @@ struct BlitPushData_t
 
 		linearToNits = g_flLinearToNits;
 		nitsToLinear = g_flNitsToLinear;
+		itmMethod = g_HDRItmMethod;
 		itmSdrNits = g_flHDRItmSdrNits;
 		itmTargetNits = g_flHDRItmTargetNits;
 	}
@@ -3214,6 +3217,7 @@ struct BlitPushData_t
 
 		linearToNits = g_flLinearToNits;
 		nitsToLinear = g_flNitsToLinear;
+		itmMethod = g_HDRItmMethod;
 		itmSdrNits = g_flHDRItmSdrNits;
 		itmTargetNits = g_flHDRItmTargetNits;
 	}

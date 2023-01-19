@@ -116,6 +116,7 @@ const struct option *gamescope_options = (struct option[]){
 	{ "hdr-sdr-content-nits", required_argument, nullptr, 0 },
 	{ "hdr-wide-gammut-for-sdr", no_argument, nullptr, 0 },
 	{ "hdr-itm-enable", no_argument, nullptr, 0 },
+	{ "hdr-itm-method", required_argument, nullptr, 0 },
 	{ "hdr-itm-sdr-nits", required_argument, nullptr, 0 },
 	{ "hdr-itm-target-nits", required_argument, nullptr, 0 },
 	{ "hdr-debug-force-support", no_argument, nullptr, 0 },
@@ -158,6 +159,9 @@ const char usage[] =
 	"  --hdr-wide-gammut-for-sdr      treat SDR sRGB content as having Rec.2020 primaries. Makes colors more vivid at cost of 'correctness'.\n"
 	"  --hdr-sdr-content-nits         set the luminance of SDR content in nits. Default: 400 nits.\n"
 	"  --hdr-itm-enable               enable SDR->HDR inverse tone mapping. only works for SDR input.\n"
+	"  --hdr-itm-method               which itm method to use. Default: 0\n"
+	"                                 0 = BT.2446 Method A\n"
+	"                                 1 = BT.2446 Methoc C\n"
 	"  --hdr-itm-sdr-nits             set the luminance of SDR content in nits used as the input for the inverse tone mapping process.\n"
 	"                                 Default: 100 nits, Max: 1000 nits\n"
 	"  --hdr-itm-target-nits          set the target luminace of the inverse tone mapping process.\n"

@@ -10,6 +10,7 @@ uniform layers_t {
     // hdr
     float u_linearToNits; // sdr -> hdr
     float u_nitsToLinear; // hdr -> sdr
+    uint u_itmMethod;
     float u_itmSdrNits;
     float u_itmTargetNits;
 };

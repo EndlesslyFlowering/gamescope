@@ -98,6 +98,7 @@
 #include "gpuvis_trace_utils.h"
 
 extern float g_flLinearToNits;
+extern uint32_t g_HDRItmMethod;
 extern float g_flHDRItmSdrNits;
 extern float g_flHDRItmTargetNits;
 
@@ -4704,6 +4705,13 @@ handle_property_notify(xwayland_ctx_t *ctx, XPropertyEvent *ev)
 		g_bHDRItmEnable = !!get_prop( ctx, ctx->root, ctx->atoms.gamescopeHDRItmEnable, 0 );
 		hasRepaint = true;
 	}
+	if ( ev->atom == ctx->atoms.gamescopeHDRItmMethod )
+	{
+		g_HDRItmMethod = get_prop( ctx, ctx->root, ctx->atoms.gamescopeHDRItmMethod, 0 );
+		if ( g_HDRItmMethod > 2 )
+			g_HDRItmMethod = 0;
+		hasRepaint = true;
+	}
 	if ( ev->atom == ctx->atoms.gamescopeHDRItmSDRNits )
 	{
 		g_flHDRItmSdrNits = get_prop( ctx, ctx->root, ctx->atoms.gamescopeHDRItmSDRNits, 0 );
@@ -5813,6 +5821,7 @@ void init_xwayland_ctx(gamescope_xwayland_server_t *xwayland_server)
 	ctx->atoms.gamescopeHDROutputFeedback = XInternAtom( ctx->dpy, "GAMESCOPE_HDR_OUTPUT_FEEDBACK", false );
 	ctx->atoms.gamescopeHDRSDRContentBrightness = XInternAtom( ctx->dpy, "GAMESCOPE_HDR_SDR_CONTENT_BRIGHTNESS", false );
 	ctx->atoms.gamescopeHDRItmEnable = XInternAtom( ctx->dpy, "GAMESCOPE_HDR_ITM_ENABLE", false );
+	ctx->atoms.gamescopeHDRItmMethod = XInternAtom( ctx->dpy, "GAMESCOPE_HDR_ITM_METHOD", false );
 	ctx->atoms.gamescopeHDRItmSDRNits = XInternAtom( ctx->dpy, "GAMESCOPE_HDR_ITM_SDR_NITS", false );
 	ctx->atoms.gamescopeHDRItmTargetNits = XInternAtom( ctx->dpy, "GAMESCOPE_HDR_ITM_TARGET_NITS", false );
 
@@ -6050,6 +6059,8 @@ steamcompmgr_main(int argc, char **argv)
 					g_bHDRForceWideGammutForSDR = true;
 				} else if (strcmp(opt_name, "hdr-itm-enable") == 0) {
 					g_bHDRItmEnable = true;
+				} else if (strcmp(opt_name, "hdr-itm-method") == 0) {
+					g_HDRItmMethod = atof(optarg);
 				} else if (strcmp(opt_name, "hdr-itm-sdr-nits") == 0) {
 					g_flHDRItmSdrNits = atof(optarg);
 				} else if (strcmp(opt_name, "hdr-itm-target-nits") == 0) {

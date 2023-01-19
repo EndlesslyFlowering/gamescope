@@ -323,4 +323,80 @@ vec3 bt2446a_inverse_tonemapping(
     return color;
 }
 
+vec3 bt2446c_inverse_tonemapping(
+    vec3  inputColor,
+    float sdrBrightness)
+//    float  alpha)
+{
+
+    //103.2 =  400 nits
+    //107.1 =  500 nits
+    //110.1 =  600 nits
+    //112.6 =  700 nits
+    //114.8 =  800 nits
+    //116.7 =  900 nits
+    //118.4 = 1000 nits
+    //153.7 is just under 10000 nits for alpha=0 and above it starts clipping
+    vec3 sdr = inputColor * (sdrBrightness > 153.7f ? 153.7f : sdrBrightness);
+
+    //6.1.6 (inverse)
+    //crosstalk matrix from 6.1.2
+    const float alpha   = 0.f; //hardcode for now as it gives the best results imo
+    const float x_alpha = 1.f - 2.f * alpha;
+    mat3 crosstalkMatrix;
+    crosstalkMatrix[0] = vec3(x_alpha, alpha,   alpha);
+    crosstalkMatrix[1] = vec3(alpha,   x_alpha, alpha);
+    crosstalkMatrix[2] = vec3(alpha,   alpha,   x_alpha);
+
+    sdr = sdr * crosstalkMatrix;
+
+    //6.1.5 (inverse)
+    //conversion to XYZ and then Yxy
+    sdr = sdr * rec709_to_xyz;
+    const float Ysdr  = sdr.y;
+    const float xyz   = sdr.x + sdr.y + sdr.z;
+    const float x_sdr = sdr.x / xyz;
+    const float y_sdr = sdr.y / xyz;
+
+    //6.1.4 (inverse)
+    //inverse tone mapping
+    const float k1 = 0.83802f;
+    const float k2 = 15.09968f;
+    const float k3 = 0.74204f;
+    const float k4 = 78.99439f;
+    const float Yhdr_ip = 58.535046646 / k1; // 58.5 = 0.80^2.4
+
+    float Yhdr = 0.f;
+    const float Yhdr_0 = Ysdr / k1;
+    const float Yhdr_1 = (exp((Ysdr - k4) / k2) + k3) * Yhdr_ip;
+
+    if (Yhdr_0 < Yhdr_ip)
+        Yhdr = Yhdr_0;
+    else
+        Yhdr = Yhdr_1;
+
+    //6.1.3 (inverse)
+    //convert to XYZ and then to RGB
+    const float Xhdr = (x_sdr / y_sdr) * Yhdr;
+    const float Zhdr = ((1.f - x_sdr - y_sdr) / y_sdr) * Yhdr;
+    vec3 hdr = vec3(Xhdr, Yhdr, Zhdr);
+    hdr = hdr * xyz_to_rec2020;
+
+    //6.1.2 (inverse)
+    //inverse crosstalk matrix from 6.1.6
+    const float m_alpha = 1.f - alpha;
+    mat3 inverseCrosstalkMatrix;
+    inverseCrosstalkMatrix[0] = vec3( m_alpha, -alpha,   -alpha);
+    inverseCrosstalkMatrix[1] = vec3(-alpha,    m_alpha, -alpha);
+    inverseCrosstalkMatrix[2] = vec3(-alpha,   -alpha,    m_alpha);
+    hdr = hdr * (inverseCrosstalkMatrix * (1.f / 1.f - 3.f * alpha));
+
+    //safety
+    hdr.r = clamp(hdr.r, 0.f, 10000.f);
+    hdr.g = clamp(hdr.g, 0.f, 10000.f);
+    hdr.b = clamp(hdr.b, 0.f, 10000.f);
+
+    return hdr;
+}
+
 #include "heatmap.h"
