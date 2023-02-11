@@ -343,8 +343,6 @@ vec3 bt2446c_inverse_tonemapping(
 
     //6.1.6 (inverse)
     //crosstalk matrix from 6.1.2
-    // should provide a wider gamut due to the crosstalk matrix being applied in RGB with BT.2020 primaries
-    sdr = convert_primaries(sdr, rec709_to_xyz, xyz_to_rec2020)
     const float alpha   = 0.f; //hardcode for now as it gives the best results imo
     const float xlpha = 1.f - 2.f * alpha;
     mat3 crosstalkMatrix;
