@@ -174,9 +174,9 @@ vec3 bt2446a_inverse_tonemapping(
     float sdr_nits,
     float target_nits)
 {
-    const vec3 k_bt2020 = vec3(0.262698338956556, 0.678008765772817, 0.0592928952706273);
-    const float k_bt2020_r_helper = 1.47460332208689; // 2 - 2 * 0.262698338956556
-    const float k_bt2020_b_helper = 1.88141420945875; // 2 - 2 * 0.0592928952706273
+    const vec3 k_bt2020 = vec3(0.2627f, 0.6780f, 0.0593f);
+    const float k_bt2020_r_helper = 1.4746f; // 2 - 2 * 0.2627
+    const float k_bt2020_b_helper = 1.8814f; // 2 - 2 * 0.0593
 
     //gamma
     const float inverse_gamma = 2.4f;
@@ -228,7 +228,7 @@ vec3 bt2446a_inverse_tonemapping(
         const float c_r_hdr = c_r_tmo * s_c;
 
         color = vec3(clamp(y_hdr + k_bt2020_r_helper * c_r_hdr, 0.f, 1000.f),
-                     clamp(y_hdr - 0.16455312684366 * c_b_hdr - 0.57135312684366 * c_r_hdr, 0.f, 1000.f),
+                     clamp(y_hdr - 0.164553126843658 * c_b_hdr - 0.571353126843658 * c_r_hdr, 0.f, 1000.f),
                      clamp(y_hdr + k_bt2020_b_helper * c_b_hdr, 0.f, 1000.f));
         color /= 1000.f;
     }
@@ -343,6 +343,8 @@ vec3 bt2446c_inverse_tonemapping(
 
     //6.1.6 (inverse)
     //crosstalk matrix from 6.1.2
+    // should provide a wider gamut due to the crosstalk matrix being applied in RGB with BT.2020 primaries
+    sdr = convert_primaries(sdr, rec709_to_xyz, xyz_to_rec2020)
     const float alpha   = 0.f; //hardcode for now as it gives the best results imo
     const float xlpha = 1.f - 2.f * alpha;
     mat3 crosstalkMatrix;
@@ -354,7 +356,7 @@ vec3 bt2446c_inverse_tonemapping(
 
     //6.1.5 (inverse)
     //conversion to XYZ and then Yxy
-    sdr = sdr * rec709_to_xyz;
+    sdr = sdr * rec2020_to_xyz;
     const float Ysdr  = sdr.y;
     const float xyz   = sdr.x + sdr.y + sdr.z;
     const float x_sdr = sdr.x / xyz;
