@@ -174,13 +174,13 @@ vec3 bt2446a_inverse_tonemapping(
     float sdr_nits,
     float target_nits)
 {
-    const vec3 k_bt2020 = vec3(0.2627f, 0.6780f, 0.0593f);
+    const vec3  k_bt2020          = vec3(0.2627f, 0.6780f, 0.0593f);
     const float k_bt2020_r_helper = 1.4746f; // 2 - 2 * 0.2627
     const float k_bt2020_b_helper = 1.8814f; // 2 - 2 * 0.0593
 
     //gamma
     const float inverse_gamma = 2.4f;
-    const float gamma = 1.f / inverse_gamma;
+    const float gamma         = 1.f / inverse_gamma;
 
     //RGB->R'G'B' gamma compression
     color = pow(color, vec3(gamma));
@@ -214,15 +214,15 @@ vec3 bt2446a_inverse_tonemapping(
 
         const float t = 70;
 
-        float e = yy_ <= t ?
-            a1 * pow(yy_, 2.f) + b1 * yy_ + c1 : 
-            a2 * pow(yy_, 2.f) + b2 * yy_ + c2;
+        float e = yy_ <= t
+                ? a1 * pow(yy_, 2.f) + b1 * yy_ + c1
+                : a2 * pow(yy_, 2.f) + b2 * yy_ + c2;
 
         const float y_hdr = pow(yy_, e);
 
-        float s_c = y_tmo > 0.f ?
-            1.075f * (y_hdr / y_tmo) : 
-            1.f;
+        float s_c = y_tmo > 0.f
+                  ? 1.075f * (y_hdr / y_tmo)
+                  : 1.f;
 
         const float c_b_hdr = c_b_tmo * s_c;
         const float c_r_hdr = c_r_tmo * s_c;
@@ -302,9 +302,9 @@ vec3 bt2446a_inverse_tonemapping(
         // Colour difference signals (inverse) and Luma (inverse)
         // get R'G'B'
         color.b = ((c_b_tmo * k_bt2020_b_helper) /
-                  col_scale) + y_;
+                   col_scale) + y_;
         color.r = ((c_r_tmo * k_bt2020_r_helper) /
-                  col_scale) + y_;
+                   col_scale) + y_;
         color.g = (y_ - (k_bt2020.r * color.r + k_bt2020.b * color.b)) /
                   k_bt2020.g;
 
