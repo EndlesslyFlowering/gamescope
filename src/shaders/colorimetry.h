@@ -257,7 +257,7 @@ vec3 bt2446a_inverse_tonemapping(
                             0.5000f;
 
         const float _first = -2.7811f;
-        const float  _sqrt = sqrt(4.83307641 - 4.604 * y_c);
+        const float  _sqrt = sqrt(pow(2.7811, 2) - 4 * (-1.151f) * (-0.6302f - y_c));
         const float   _div = -2.302f;
         const float  y_p_1 = (_first + _sqrt) /
                              _div;
