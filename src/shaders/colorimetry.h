@@ -167,6 +167,9 @@ vec3 tonemap(vec3 color) {
     return tonemap_filmic(color);
 }
 
+const vec3  k_bt2020          = vec3(0.2627f, 0.6780f, 0.0593f);
+const float k_bt2020_r_helper = 1.4746f; // 2 - 2 * 0.2627
+const float k_bt2020_b_helper = 1.8814f; // 2 - 2 * 0.0593
 // Rep. ITU-R BT.2446-1 Table 2-4 (inversed)
 // BT.2446 Method A inverse tone mapping (itm)
 vec3 bt2446a_inverse_tonemapping(
@@ -174,10 +177,6 @@ vec3 bt2446a_inverse_tonemapping(
     float sdr_nits,
     float target_nits)
 {
-    const vec3  k_bt2020          = vec3(0.2627f, 0.6780f, 0.0593f);
-    const float k_bt2020_r_helper = 1.4746f; // 2 - 2 * 0.2627
-    const float k_bt2020_b_helper = 1.8814f; // 2 - 2 * 0.0593
-
     //gamma
     const float inverse_gamma = 2.4f;
     const float gamma         = 1.f / inverse_gamma;
@@ -200,7 +199,7 @@ vec3 bt2446a_inverse_tonemapping(
     if ((sdr_nits > 99.f && sdr_nits < 101.f) && (target_nits > 999.f && target_nits < 1001.f))
     //avoid float issues
     {
-        sdr_nits = 100.f;
+        sdr_nits    = 100.f;
         target_nits = 1000.f;
 
         const float a1 =  1.8712e-5;
@@ -227,9 +226,10 @@ vec3 bt2446a_inverse_tonemapping(
         const float c_b_hdr = c_b_tmo * s_c;
         const float c_r_hdr = c_r_tmo * s_c;
 
-        color = vec3(clamp(y_hdr + k_bt2020_r_helper * c_r_hdr, 0.f, 1000.f),
-                     clamp(y_hdr - 0.164553126843658 * c_b_hdr - 0.571353126843658 * c_r_hdr, 0.f, 1000.f),
-                     clamp(y_hdr + k_bt2020_b_helper * c_b_hdr, 0.f, 1000.f));
+        color = vec3(y_hdr + k_bt2020_r_helper * c_r_hdr,
+                     y_hdr - 0.164553126843658 * c_b_hdr - 0.571353126843658 * c_r_hdr,
+                     y_hdr + k_bt2020_b_helper * c_b_hdr);
+        color = clamp(color, 0.f, 1000.f)
         color /= 1000.f;
     }
     else
@@ -394,9 +394,7 @@ vec3 bt2446c_inverse_tonemapping(
     hdr = hdr * (inverseCrosstalkMatrix * (1.f / 1.f - 3.f * alpha));
 
     //safety
-    hdr.r = clamp(hdr.r, 0.f, 10000.f);
-    hdr.g = clamp(hdr.g, 0.f, 10000.f);
-    hdr.b = clamp(hdr.b, 0.f, 10000.f);
+    hdr = clamp(hdr, 0.f, 10000.f);
 
     return hdr;
 }
